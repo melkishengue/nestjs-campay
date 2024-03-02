@@ -1,4 +1,4 @@
-import { DynamicModule, Global, Module } from "@nestjs/common";
+import { DynamicModule, Global, Module, Provider } from "@nestjs/common";
 
 import { CampayService } from "./campay.service";
 import { CampayHttpClientService } from "./campay-http-client.service";
@@ -43,7 +43,8 @@ export class CampayModule {
         {
           provide: CAMPAY_CONFIG_OPTIONS,
           useValue: options
-        }
+        },
+        CampayModule.generateInternalProvider()
       ]
     };
   }
@@ -83,25 +84,29 @@ export class CampayModule {
           provide: CAMPAY_CONFIG_OPTIONS,
           ...options
         },
-        {
-          provide: INTERNAL_CAMPAY_CONFIG_OPTIONS,
-          useFactory: (
-            config: CampayModuleConfigOptions
-          ): CampayInternalModuleConfigOptions => {
-            const auth = getModuleAuthConfig(config);
-
-            return {
-              ...auth,
-              isProduction: !!config.isProduction,
-              baseUrl: config.isProduction
-                ? "https://demo.campay.net/api"
-                : "https://demo.campay.net/api"
-            };
-          },
-          inject: [CAMPAY_CONFIG_OPTIONS]
-        },
+        CampayModule.generateInternalProvider(),
         ...(options.providers ?? [])
       ]
+    };
+  }
+
+  static generateInternalProvider(): Provider {
+    return {
+      provide: INTERNAL_CAMPAY_CONFIG_OPTIONS,
+      useFactory: (
+        config: CampayModuleConfigOptions
+      ): CampayInternalModuleConfigOptions => {
+        const auth = getModuleAuthConfig(config);
+
+        return {
+          ...auth,
+          isProduction: !!config.isProduction,
+          baseUrl: config.isProduction
+            ? "https://demo.campay.net/api"
+            : "https://demo.campay.net/api"
+        };
+      },
+      inject: [CAMPAY_CONFIG_OPTIONS]
     };
   }
 }
