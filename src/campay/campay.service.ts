@@ -9,6 +9,8 @@ import {
   CampayCollectRequest,
   CampayCollectResponse,
   CampayCurrency,
+  CampayHistoryEntry,
+  CampayQueryHistoryRequest,
   CampayQueryStatusRequest,
   CampayTransaction
 } from "./campay.dto";
@@ -37,9 +39,26 @@ export class CampayService {
         from: params.from,
         external_reference: params.external_reference,
         description: params.description,
-        currency: params.currency ?? CampayCurrency.cfa,
+        currency: params.currency ?? CampayCurrency.Cfa,
         uuid: params.uuid ?? uuidv4()
       }
+    });
+
+    this.logger.debug(`Response: ${JSON.stringify(res.data)}`);
+
+    return res.data;
+  }
+
+  async getHistory(
+    params: CampayQueryHistoryRequest
+  ): Promise<CampayHistoryEntry[]> {
+    this.logger.debug(`Querying application history`, params);
+
+    const res = await this.campayHttpClientService.get<
+      undefined,
+      CampayHistoryEntry[]
+    >({
+      url: `${this.config.baseUrl}/history/`
     });
 
     this.logger.debug(`Response: ${JSON.stringify(res.data)}`);
