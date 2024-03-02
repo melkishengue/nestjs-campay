@@ -1,14 +1,16 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 
 import {
   INTERNAL_CAMPAY_CONFIG_OPTIONS,
   CampayInternalModuleConfigOptions
 } from "./types";
+import { getAxiosErrorMessage } from "./utils";
 
 @Injectable()
 export class CampayHttpClientService {
   private $instance!: AxiosInstance;
+  private readonly logger = new Logger(CampayHttpClientService.name);
 
   constructor(
     @Inject(INTERNAL_CAMPAY_CONFIG_OPTIONS)
@@ -34,13 +36,19 @@ export class CampayHttpClientService {
     body?: TBody;
     headers?: Record<string, any>;
   }): Promise<AxiosResponse<TResponse>> {
-    const res = await this.$instance.post<
-      unknown,
-      AxiosResponse<TResponse>,
-      TBody
-    >(url, body, { headers });
-    console.log("😇", res.data);
-    return res;
+    try {
+      const res = await this.$instance.post<
+        unknown,
+        AxiosResponse<TResponse>,
+        TBody
+      >(url, body, { headers });
+      console.log("😇", res.data);
+      return res;
+    } catch (error) {
+      const axiosMessage = getAxiosErrorMessage(error);
+      this.logger.debug(axiosMessage);
+      throw error;
+    }
   }
 
   async get<TParams = any, TResponse = void>({
@@ -52,13 +60,19 @@ export class CampayHttpClientService {
     params?: TParams;
     headers?: Record<string, any>;
   }): Promise<AxiosResponse<TResponse>> {
-    const res = await this.$instance.get<
-      unknown,
-      AxiosResponse<TResponse>,
-      TParams
-    >(url, { headers, params });
-    console.log("🤛", res.data);
+    try {
+      const res = await this.$instance.get<
+        unknown,
+        AxiosResponse<TResponse>,
+        TParams
+      >(url, { headers, params });
+      console.log("🤛", res.data);
 
-    return res;
+      return res;
+    } catch (error) {
+      const axiosMessage = getAxiosErrorMessage(error);
+      this.logger.debug(axiosMessage);
+      throw error;
+    }
   }
 }

@@ -54,11 +54,12 @@ export class CampayService {
   ): Promise<CampayHistoryEntry[]> {
     this.logger.debug(`Querying application history`, params);
 
-    const res = await this.campayHttpClientService.get<
-      undefined,
+    const res = await this.campayHttpClientService.post<
+      CampayQueryHistoryRequest,
       CampayHistoryEntry[]
     >({
-      url: `${this.config.baseUrl}/history/`
+      url: `${this.config.baseUrl}/history/`,
+      body: params
     });
 
     this.logger.debug(`Response: ${JSON.stringify(res.data)}`);
