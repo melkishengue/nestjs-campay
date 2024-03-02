@@ -2,7 +2,8 @@
   "name": "nestjs-campay",
   "version": "1.0.0",
   "description": "Campay integration NestJS module",
-  "main": "dist/index.js",
+  "main": "dist/index",
+  "types": "dist/index",
   "scripts": {
     "start:dev": "tsc -w",
     "build": "tsc -p tsconfig.json",

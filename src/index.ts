@@ -1,3 +1,3 @@
-console.log("💇‍♀️");
+export const sayHello = (name: string) => `Good morning ${name}!`;
 
-console.log("👩‍💼");
+export * from "./campay";
