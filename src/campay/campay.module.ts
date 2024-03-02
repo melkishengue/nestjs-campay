@@ -1,13 +1,36 @@
 import { DynamicModule, Global, Module } from "@nestjs/common";
+
+import { CampayService } from "./campay.service";
+import { CampayHttpClientService } from "./campay-http-client.service";
 import {
+  AuthStrategy,
   CAMPAY_CONFIG_OPTIONS,
   CampayInternalModuleConfigOptions,
   CampayModuleAsyncOptions,
   CampayModuleConfigOptions,
   INTERNAL_CAMPAY_CONFIG_OPTIONS
 } from "./types";
-import { CampayService } from "./campay.service";
-import { CampayHttpClientService } from "./campay-http-client.service";
+
+const getModuleAuthConfig = (
+  candidateConfig: CampayModuleConfigOptions
+):
+  | { apiKey: string; authStrategy: AuthStrategy }
+  | { username: string; password: string; authStrategy: AuthStrategy } => {
+  if (candidateConfig.apiKey)
+    return { apiKey: candidateConfig.apiKey, authStrategy: "apiKey" };
+
+  if (!(candidateConfig.username && candidateConfig.password)) {
+    throw new Error(
+      `Configuration error: you must either pass an api key, or a username and password`
+    );
+  }
+
+  return {
+    username: candidateConfig.username,
+    password: candidateConfig.password,
+    authStrategy: "access_token"
+  };
+};
 
 @Global()
 @Module({})
@@ -65,8 +88,10 @@ export class CampayModule {
           useFactory: (
             config: CampayModuleConfigOptions
           ): CampayInternalModuleConfigOptions => {
+            const auth = getModuleAuthConfig(config);
+
             return {
-              apiKey: config.apiKey,
+              ...auth,
               isProduction: !!config.isProduction,
               baseUrl: config.isProduction
                 ? "https://demo.campay.net/api"

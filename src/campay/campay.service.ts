@@ -2,10 +2,6 @@ import { Inject, Injectable, Logger } from "@nestjs/common";
 import { v4 as uuidv4 } from "uuid";
 
 import {
-  CampayInternalModuleConfigOptions,
-  INTERNAL_CAMPAY_CONFIG_OPTIONS
-} from "./types";
-import {
   CampayCollectRequest,
   CampayCollectResponse,
   CampayCurrency,
@@ -13,8 +9,12 @@ import {
   CampayQueryHistoryRequest,
   CampayQueryStatusRequest,
   CampayTransaction
-} from "./campay.dto";
+} from "./campay.types";
 import { CampayHttpClientService } from "./campay-http-client.service";
+import {
+  CampayInternalModuleConfigOptions,
+  INTERNAL_CAMPAY_CONFIG_OPTIONS
+} from "./types";
 
 @Injectable()
 export class CampayService {

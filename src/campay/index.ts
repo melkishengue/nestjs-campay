@@ -1,3 +1,3 @@
 export * from "./campay.module";
 export * from "./campay.service";
-export * from "./campay.dto";
+export * from "./campay.types";

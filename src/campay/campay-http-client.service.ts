@@ -2,8 +2,8 @@ import { Inject, Injectable, Logger } from "@nestjs/common";
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 
 import {
-  INTERNAL_CAMPAY_CONFIG_OPTIONS,
-  CampayInternalModuleConfigOptions
+  CampayInternalModuleConfigOptions,
+  INTERNAL_CAMPAY_CONFIG_OPTIONS
 } from "./types";
 import { getAxiosErrorMessage } from "./utils";
 
@@ -20,9 +20,11 @@ export class CampayHttpClientService {
       baseURL: this.config.baseUrl
     });
 
-    this.$instance.defaults.headers.common[
-      "Authorization"
-    ] = `Token ${this.config.apiKey}`;
+    if (this.config.authStrategy === "apiKey") {
+      this.$instance.defaults.headers.common[
+        "Authorization"
+      ] = `Token ${this.config.apiKey}`;
+    }
     this.$instance.defaults.headers["Content-Type"] = "application/json";
     this.$instance.defaults.headers["Accept"] = "application/json";
   }
@@ -34,15 +36,18 @@ export class CampayHttpClientService {
   }: {
     url: string;
     body?: TBody;
-    headers?: Record<string, any>;
+    headers?: Record<string, string>;
   }): Promise<AxiosResponse<TResponse>> {
+    if (this.config.authStrategy === "access_token") {
+      // fetch access token and update headers
+    }
+
     try {
       const res = await this.$instance.post<
         unknown,
         AxiosResponse<TResponse>,
         TBody
       >(url, body, { headers });
-      console.log("😇", res.data);
       return res;
     } catch (error) {
       const axiosMessage = getAxiosErrorMessage(error);
@@ -51,22 +56,25 @@ export class CampayHttpClientService {
     }
   }
 
-  async get<TParams = any, TResponse = void>({
+  async get<TParams = unknown, TResponse = void>({
     url,
     params,
     headers
   }: {
     url: string;
     params?: TParams;
-    headers?: Record<string, any>;
+    headers?: Record<string, string>;
   }): Promise<AxiosResponse<TResponse>> {
+    if (this.config.authStrategy === "access_token") {
+      // fetch access token and update headers
+    }
+
     try {
       const res = await this.$instance.get<
         unknown,
         AxiosResponse<TResponse>,
         TParams
       >(url, { headers, params });
-      console.log("🤛", res.data);
 
       return res;
     } catch (error) {

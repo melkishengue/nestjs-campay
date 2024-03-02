@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export const getAxiosErrorMessage = (error: unknown): string => {
   console.log("🙋‍♀️", error);
   if ((error as any).response) {

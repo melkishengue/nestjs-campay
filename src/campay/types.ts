@@ -7,14 +7,19 @@ export type ModuleAsyncOptions<T> = Pick<
   Pick<FactoryProvider<T>, "useFactory" | "inject">;
 
 export interface CampayModuleConfigOptions {
-  apiKey: string;
+  apiKey?: string;
+  username?: string;
+  password?: string;
   isProduction?: boolean;
 }
 
-export interface CampayInternalModuleConfigOptions {
-  apiKey: string;
+export type AuthStrategy = "apiKey" | "access_token";
+
+export interface CampayInternalModuleConfigOptions
+  extends CampayModuleConfigOptions {
   isProduction: boolean;
   baseUrl: string;
+  authStrategy: AuthStrategy;
 }
 
 export type CampayModuleAsyncOptions =
