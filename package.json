@@ -15,11 +15,7 @@
     "test:cov": "jest --coverage",
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
-  "keywords": [
-    "campay",
-    "cameroon payment",
-    "mobile money"
-  ],
+  "keywords": ["campay", "cameroon payment", "mobile money"],
   "publishConfig": {
     "access": "public"
   },

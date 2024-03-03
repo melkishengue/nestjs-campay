@@ -11,40 +11,19 @@ import {
   INTERNAL_CAMPAY_CONFIG_OPTIONS
 } from "./types";
 
-const getModuleAuthConfig = (
-  candidateConfig: CampayModuleConfigOptions
-):
-  | { apiKey: string; authStrategy: AuthStrategy }
-  | { username: string; password: string; authStrategy: AuthStrategy } => {
-  if (candidateConfig.apiKey)
-    return { apiKey: candidateConfig.apiKey, authStrategy: "apiKey" };
-
-  if (!(candidateConfig.username && candidateConfig.password)) {
-    throw new Error(
-      `Configuration error: you must either pass an api key, or a username and password`
-    );
-  }
-
-  return {
-    username: candidateConfig.username,
-    password: candidateConfig.password,
-    authStrategy: "access_token"
-  };
-};
-
 @Global()
 @Module({})
 export class CampayModule {
   static forRoot(options: CampayModuleConfigOptions): DynamicModule {
     return {
       module: CampayModule,
+      exports: [CampayService],
       providers: [
-        CampayService,
         {
           provide: CAMPAY_CONFIG_OPTIONS,
           useValue: options
         },
-        CampayModule.generateInternalProvider()
+        ...CampayModule.getProviders()
       ]
     };
   }
@@ -78,35 +57,58 @@ export class CampayModule {
       imports: options.imports,
       exports: [CampayService],
       providers: [
-        CampayService,
-        CampayHttpClientService,
         {
           provide: CAMPAY_CONFIG_OPTIONS,
           ...options
         },
-        CampayModule.generateInternalProvider(),
+        ...CampayModule.getProviders(),
         ...(options.providers ?? [])
       ]
     };
   }
 
-  static generateInternalProvider(): Provider {
-    return {
-      provide: INTERNAL_CAMPAY_CONFIG_OPTIONS,
-      useFactory: (
-        config: CampayModuleConfigOptions
-      ): CampayInternalModuleConfigOptions => {
-        const auth = getModuleAuthConfig(config);
+  static getProviders(): Provider[] {
+    return [
+      {
+        provide: INTERNAL_CAMPAY_CONFIG_OPTIONS,
+        useFactory: (
+          config: CampayModuleConfigOptions
+        ): CampayInternalModuleConfigOptions => {
+          const auth = CampayModule.getModuleAuthConfig(config);
 
-        return {
-          ...auth,
-          isProduction: !!config.isProduction,
-          baseUrl: config.isProduction
-            ? "https://demo.campay.net/api"
-            : "https://demo.campay.net/api"
-        };
+          return {
+            ...auth,
+            isProduction: !!config.isProduction,
+            baseUrl: config.isProduction
+              ? "https://demo.campay.net/api"
+              : "https://demo.campay.net/api"
+          };
+        },
+        inject: [CAMPAY_CONFIG_OPTIONS]
       },
-      inject: [CAMPAY_CONFIG_OPTIONS]
-    };
+      CampayService,
+      CampayHttpClientService
+    ];
   }
+
+  static getModuleAuthConfig = (
+    candidateConfig: CampayModuleConfigOptions
+  ):
+    | { apiKey: string; authStrategy: AuthStrategy }
+    | { username: string; password: string; authStrategy: AuthStrategy } => {
+    if (candidateConfig.apiKey)
+      return { apiKey: candidateConfig.apiKey, authStrategy: "apiKey" };
+
+    if (!(candidateConfig.username && candidateConfig.password)) {
+      throw new Error(
+        `Configuration error: you must either pass an api key, or a username and password`
+      );
+    }
+
+    return {
+      username: candidateConfig.username,
+      password: candidateConfig.password,
+      authStrategy: "access_token"
+    };
+  };
 }
