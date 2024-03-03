@@ -2,13 +2,19 @@ import { Inject, Injectable, Logger } from "@nestjs/common";
 import { v4 as uuidv4 } from "uuid";
 
 import {
+  CampayAirtimeTransferRequest,
+  CampayBalanceResponse,
   CampayCollectRequest,
   CampayCollectResponse,
   CampayCurrency,
   CampayHistoryEntry,
+  CampayPaymentLinkRequest,
+  CampayPaymentLinkResponse,
   CampayQueryHistoryRequest,
   CampayQueryStatusRequest,
-  CampayTransaction
+  CampayTransaction,
+  CampayWithdrawRequest,
+  CampayWithdrawResponse
 } from "./campay.types";
 import { CampayHttpClientService } from "./campay-http-client.service";
 import {
@@ -35,12 +41,87 @@ export class CampayService {
     >({
       url: `${this.config.baseUrl}/collect/`,
       body: {
-        amount: params.amount,
-        from: params.from,
-        external_reference: params.external_reference,
-        description: params.description,
+        ...params,
         currency: params.currency ?? CampayCurrency.Cfa,
         uuid: params.uuid ?? uuidv4()
+      }
+    });
+
+    this.logger.debug(`Response: ${JSON.stringify(res.data)}`);
+
+    return res.data;
+  }
+
+  async getBalance(): Promise<CampayBalanceResponse> {
+    this.logger.debug(`Get balance operation is starting with details`);
+
+    const res = await this.campayHttpClientService.get<
+      undefined,
+      CampayBalanceResponse
+    >({
+      url: `${this.config.baseUrl}/balance/`
+    });
+
+    this.logger.debug(`Response: ${JSON.stringify(res.data)}`);
+
+    return res.data;
+  }
+
+  async withdraw(
+    params: CampayWithdrawRequest
+  ): Promise<CampayWithdrawResponse> {
+    this.logger.debug(`Withdraw operation is starting with details`, params);
+
+    const res = await this.campayHttpClientService.post<
+      CampayWithdrawRequest,
+      CampayWithdrawResponse
+    >({
+      url: `${this.config.baseUrl}/withdraw/`,
+      body: params
+    });
+
+    this.logger.debug(`Response: ${JSON.stringify(res.data)}`);
+
+    return res.data;
+  }
+
+  async airTimeTransfer(
+    params: CampayAirtimeTransferRequest
+  ): Promise<undefined> {
+    this.logger.debug(
+      `Transferring airtime operation is starting with details`,
+      params
+    );
+
+    const res = await this.campayHttpClientService.post<
+      CampayAirtimeTransferRequest,
+      undefined
+    >({
+      url: `${this.config.baseUrl}/utilities/airtime/transfer/`,
+      body: params
+    });
+
+    this.logger.debug(`Response: ${JSON.stringify(res.data)}`);
+
+    return res.data;
+  }
+
+  async getPaymentLink(
+    params: CampayPaymentLinkRequest
+  ): Promise<CampayPaymentLinkResponse> {
+    this.logger.debug(
+      `Payment link operation is starting with details`,
+      params
+    );
+
+    const res = await this.campayHttpClientService.post<
+      CampayPaymentLinkRequest,
+      CampayPaymentLinkResponse
+    >({
+      url: `${this.config.baseUrl}/get_payment_link/`,
+      body: {
+        ...params,
+        currency: params.currency ?? CampayCurrency.Cfa
       }
     });
 
@@ -52,7 +133,7 @@ export class CampayService {
   async getHistory(
     params: CampayQueryHistoryRequest
   ): Promise<CampayHistoryEntry[]> {
-    this.logger.debug(`Querying application history`, params);
+    this.logger.debug(`History operation is starting with details`, params);
 
     const res = await this.campayHttpClientService.post<
       CampayQueryHistoryRequest,
@@ -70,7 +151,10 @@ export class CampayService {
   async getStatus(
     params: CampayQueryStatusRequest
   ): Promise<CampayTransaction> {
-    this.logger.debug(`Checking status of transaction with details`, params);
+    this.logger.debug(
+      `Status query operation is starting with details`,
+      params
+    );
 
     const res = await this.campayHttpClientService.get<
       undefined,
