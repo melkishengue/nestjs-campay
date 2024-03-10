@@ -1,9 +1,11 @@
 import { DynamicModule, Global, Module, Provider } from "@nestjs/common";
+import axios from "axios";
 
 import { CampayService } from "./campay.service";
 import { CampayHttpClientService } from "./campay-http-client.service";
 import {
   AuthStrategy,
+  AXIOS_INSTANCE_TOKEN,
   CAMPAY_CONFIG_OPTIONS,
   CampayInternalModuleConfigOptions,
   CampayModuleAsyncOptions,
@@ -86,8 +88,12 @@ export class CampayModule {
         },
         inject: [CAMPAY_CONFIG_OPTIONS]
       },
-      CampayService,
-      CampayHttpClientService
+      {
+        provide: AXIOS_INSTANCE_TOKEN,
+        useValue: axios.create()
+      },
+      CampayHttpClientService,
+      CampayService
     ];
   }
 

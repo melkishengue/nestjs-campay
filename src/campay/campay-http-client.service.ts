@@ -1,7 +1,8 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
-import axios, { AxiosInstance, AxiosResponse } from "axios";
+import { AxiosInstance, AxiosResponse } from "axios";
 
 import {
+  AXIOS_INSTANCE_TOKEN,
   CampayInternalModuleConfigOptions,
   INTERNAL_CAMPAY_CONFIG_OPTIONS
 } from "./types";
@@ -9,26 +10,25 @@ import { getAxiosErrorMessage } from "./utils";
 
 @Injectable()
 export class CampayHttpClientService {
-  private $instance!: AxiosInstance;
   private readonly logger = new Logger(CampayHttpClientService.name);
   private readonly cache: Map<string, string> = new Map();
 
   constructor(
     @Inject(INTERNAL_CAMPAY_CONFIG_OPTIONS)
-    private readonly config: CampayInternalModuleConfigOptions
+    private readonly config: CampayInternalModuleConfigOptions,
+    @Inject(AXIOS_INSTANCE_TOKEN)
+    private readonly $axiosInstance: AxiosInstance
   ) {
-    this.$instance = axios.create({
-      baseURL: this.config.baseUrl
-    });
+    this.$axiosInstance.defaults.baseURL = this.config.baseUrl;
 
     if (this.config.authStrategy === "apiKey") {
-      this.$instance.defaults.headers.common[
+      this.$axiosInstance.defaults.headers.common[
         "Authorization"
       ] = `Token ${this.config.apiKey}`;
     }
 
     if (this.config.authStrategy === "access_token") {
-      this.$instance.interceptors.response.use(
+      this.$axiosInstance.interceptors.response.use(
         (response) => response,
         (error) => {
           const status = error.response ? error.response.status : null;
@@ -51,7 +51,7 @@ export class CampayHttpClientService {
                   error.config.headers["Authorization"] = "Token " + token;
                   error.config.headers["X-jwt-retries"] = nbPreviousRetries + 1;
                   error.config.baseURL = undefined;
-                  return axios.request(error.config);
+                  return this.$axiosInstance.request(error.config);
                 })
                 // Would be nice to catch an error here, which would work, if the interceptor is omitted
                 .catch((err) => err)
@@ -63,8 +63,8 @@ export class CampayHttpClientService {
       );
     }
 
-    this.$instance.defaults.headers["Content-Type"] = "application/json";
-    this.$instance.defaults.headers["Accept"] = "application/json";
+    this.$axiosInstance.defaults.headers["Content-Type"] = "application/json";
+    this.$axiosInstance.defaults.headers["Accept"] = "application/json";
   }
 
   async post<TBody = object, TResponse = void>({
@@ -83,7 +83,7 @@ export class CampayHttpClientService {
     }
 
     try {
-      const res = await this.$instance.post<
+      const res = await this.$axiosInstance.post<
         unknown,
         AxiosResponse<TResponse>,
         TBody
@@ -113,7 +113,7 @@ export class CampayHttpClientService {
     }
 
     try {
-      const res = await this.$instance.get<
+      const res = await this.$axiosInstance.get<
         unknown,
         AxiosResponse<TResponse>,
         TParams
@@ -131,7 +131,7 @@ export class CampayHttpClientService {
     AxiosResponse<{ token: string; expires_in: number }>
   > {
     try {
-      const res = await this.$instance.post<
+      const res = await this.$axiosInstance.post<
         unknown,
         AxiosResponse<{ token: string; expires_in: number }>
       >("token", {
@@ -155,6 +155,6 @@ export class CampayHttpClientService {
   }
 
   getAxiosInstance(): AxiosInstance {
-    return this.$instance;
+    return this.$axiosInstance;
   }
 }
