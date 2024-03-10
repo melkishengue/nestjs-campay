@@ -44,7 +44,7 @@ export class MyService {
 }
 ```
 
-This module is just a wrapper around the campay service. This implies that all restrictions applying to the campay http API also applies to this module, like e.g. you will not be able to transfer more than 100XAF in development mode (that you set while registering the module via the `isProduction` property)
+This module functions as a wrapper for the campay HTTP API. Therefore, it inherits all constraints imposed by the campay HTTP API. For instance, in development mode (specified by the `isProduction` property during module registration), limitations such as a maximum transfer amount of 100XAF apply.
 
 ## Configuration params
 
@@ -80,7 +80,7 @@ interface Params {
 }
 ```
 
-If the `apiKey` is set, then the authentication with the Campay API will be done via apiKey. Otherwise, the `username` and `password` options _must be set_. If not an error will be thrown at startup.
+When the `apiKey` is specified, authentication with the Campay API will utilize it. Otherwise, both the `username` and `password` options must be provided. Failure to provide either will result in an error being thrown during startup.
 
 ### Synchronous configuration
 
@@ -105,7 +105,7 @@ class MyModule {}
 
 With `CampayModule.forRootAsync` you can, for example, import your `ConfigModule` and inject `ConfigService` to use it in `useFactory` method.
 
-`useFactory` should return object with [Params interface](#configuration-params) or undefined
+`useFactory` should return object with [Params interface](#configuration-params).
 
 Here's an example:
 

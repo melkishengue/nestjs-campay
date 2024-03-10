@@ -32,8 +32,6 @@ describe("Campay service", () => {
       campayHttpClientService.getAxiosInstance().defaults.headers.common
         .Authorization
     ).toBe("Token api-key-xxx-yyy");
-
-    console.log("👔", campayHttpClientService.getAxiosInstance().interceptors);
   });
 
   it("should correctly query history", async () => {
