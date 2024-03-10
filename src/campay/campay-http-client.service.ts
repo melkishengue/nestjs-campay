@@ -88,6 +88,7 @@ export class CampayHttpClientService {
         AxiosResponse<TResponse>,
         TBody
       >(url, body, { headers });
+
       return res;
     } catch (error) {
       const axiosMessage = getAxiosErrorMessage(error);
@@ -151,5 +152,9 @@ export class CampayHttpClientService {
 
   private getToken(): string {
     return this.cache.get("ACCESS_TOKEN") ?? "";
+  }
+
+  getAxiosInstance(): AxiosInstance {
+    return this.$instance;
   }
 }
