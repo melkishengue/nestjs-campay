@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { AxiosInstance, AxiosResponse } from "axios";
 
+import { TokenService } from "./token.service";
 import {
   AXIOS_INSTANCE_TOKEN,
   CampayInternalModuleConfigOptions,
@@ -11,42 +12,44 @@ import { getAxiosErrorMessage } from "./utils";
 @Injectable()
 export class CampayHttpClientService {
   private readonly logger = new Logger(CampayHttpClientService.name);
-  private readonly cache: Map<string, string> = new Map();
 
   constructor(
     @Inject(INTERNAL_CAMPAY_CONFIG_OPTIONS)
     private readonly config: CampayInternalModuleConfigOptions,
     @Inject(AXIOS_INSTANCE_TOKEN)
-    private readonly $axiosInstance: AxiosInstance
+    private readonly $axiosInstance: AxiosInstance,
+    private readonly tokenService: TokenService
   ) {
     this.$axiosInstance.defaults.baseURL = this.config.baseUrl;
 
-    if (this.config.authStrategy === "apiKey") {
+    if (this.config.authStrategy === "permanentAccessToken") {
+      this.logger.debug("Authentication via api key...");
       this.$axiosInstance.defaults.headers.common[
         "Authorization"
-      ] = `Token ${this.config.apiKey}`;
+      ] = `Token ${this.config.permanentAccessToken}`;
     }
 
-    if (this.config.authStrategy === "access_token") {
+    if (this.config.authStrategy === "usernamePassword") {
+      this.logger.debug(
+        "Authentication via username + password. Access tokens will be automatically refreshed..."
+      );
       this.$axiosInstance.interceptors.response.use(
         (response) => response,
         (error) => {
           const status = error.response ? error.response.status : null;
-          const message = error.response ? error.response.data.message : null;
           const nbPreviousRetries =
             Number(error.config.headers["X-jwt-retries"] || 0) || 0;
 
-          console.log("💄", nbPreviousRetries, message, status);
-
           if (status === 401 && nbPreviousRetries < 5) {
+            this.logger.debug(
+              `Access denied. New access token will be fetched...`
+            );
+
             return (
-              this.fetchToken()
-                .then((response) => {
-                  const token = response.data.token;
-
-                  this.setToken(token);
-
-                  console.log("🧣", token);
+              this.tokenService
+                .refreshToken()
+                .then(() => {
+                  const token = this.tokenService.getAccessToken();
 
                   error.config.headers["Authorization"] = "Token " + token;
                   error.config.headers["X-jwt-retries"] = nbPreviousRetries + 1;
@@ -54,7 +57,9 @@ export class CampayHttpClientService {
                   return this.$axiosInstance.request(error.config);
                 })
                 // Would be nice to catch an error here, which would work, if the interceptor is omitted
-                .catch((err) => err)
+                .catch((err) => {
+                  return Promise.reject(err);
+                })
             );
           }
 
@@ -76,8 +81,8 @@ export class CampayHttpClientService {
     body?: TBody;
     headers?: Record<string, string>;
   }): Promise<AxiosResponse<TResponse>> {
-    if (this.config.authStrategy === "access_token") {
-      const token = this.getToken();
+    if (this.config.authStrategy === "usernamePassword") {
+      const token = this.tokenService.getAccessToken();
       headers = headers ?? {};
       headers["Authorization"] = `Token ${token}`;
     }
@@ -106,8 +111,8 @@ export class CampayHttpClientService {
     params?: TParams;
     headers?: Record<string, string>;
   }): Promise<AxiosResponse<TResponse>> {
-    if (this.config.authStrategy === "access_token") {
-      const token = this.getToken();
+    if (this.config.authStrategy === "usernamePassword") {
+      const token = this.tokenService.getAccessToken();
       headers = headers ?? {};
       headers["Authorization"] = `Token ${token}`;
     }
@@ -125,33 +130,6 @@ export class CampayHttpClientService {
       this.logger.debug(axiosMessage);
       throw error;
     }
-  }
-
-  private async fetchToken(): Promise<
-    AxiosResponse<{ token: string; expires_in: number }>
-  > {
-    try {
-      const res = await this.$axiosInstance.post<
-        unknown,
-        AxiosResponse<{ token: string; expires_in: number }>
-      >("token", {
-        username: this.config.username,
-        password: this.config.password
-      });
-      return res;
-    } catch (error) {
-      const axiosMessage = getAxiosErrorMessage(error);
-      this.logger.debug(axiosMessage);
-      throw error;
-    }
-  }
-
-  private setToken(token: string): void {
-    this.cache.set("ACCESS_TOKEN", token);
-  }
-
-  private getToken(): string {
-    return this.cache.get("ACCESS_TOKEN") ?? "";
   }
 
   getAxiosInstance(): AxiosInstance {

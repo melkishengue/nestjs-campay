@@ -3,6 +3,7 @@ import axios from "axios";
 
 import { CampayService } from "./campay.service";
 import { CampayHttpClientService } from "./campay-http-client.service";
+import { TokenService } from "./token.service";
 import {
   AuthStrategy,
   AXIOS_INSTANCE_TOKEN,
@@ -39,7 +40,7 @@ export class CampayModule {
         CampayModule.forRootAsync({
             useFactory: (config: Config): CampayModuleConfigOptions => {
               return {
-                apiKey: config.API_KEY,
+                permanentAccessToken: config.API_KEY,
                 isProduction: config.IS_PRODUCTION,
               };
             },
@@ -82,8 +83,9 @@ export class CampayModule {
             ...auth,
             isProduction: !!config.isProduction,
             baseUrl: config.isProduction
-              ? "https://demo.campay.net/api"
-              : "https://demo.campay.net/api"
+              ? "https://www.campay.net/api"
+              : "https://demo.campay.net/api",
+            nbRefreshTokenRetries: config.nbRefreshTokenRetries || 2
           };
         },
         inject: [CAMPAY_CONFIG_OPTIONS]
@@ -93,28 +95,32 @@ export class CampayModule {
         useValue: axios.create()
       },
       CampayHttpClientService,
-      CampayService
+      CampayService,
+      TokenService
     ];
   }
 
   static getModuleAuthConfig = (
     candidateConfig: CampayModuleConfigOptions
   ):
-    | { apiKey: string; authStrategy: AuthStrategy }
+    | { permanentAccessToken: string; authStrategy: AuthStrategy }
     | { username: string; password: string; authStrategy: AuthStrategy } => {
-    if (candidateConfig.apiKey)
-      return { apiKey: candidateConfig.apiKey, authStrategy: "apiKey" };
+    if (candidateConfig.permanentAccessToken)
+      return {
+        permanentAccessToken: candidateConfig.permanentAccessToken,
+        authStrategy: "permanentAccessToken"
+      };
 
     if (!(candidateConfig.username && candidateConfig.password)) {
       throw new Error(
-        `Configuration error: you must either pass an api key, or a username and password`
+        `Configuration error: you must either pass a permanent access token, or a username and password`
       );
     }
 
     return {
       username: candidateConfig.username,
       password: candidateConfig.password,
-      authStrategy: "access_token"
+      authStrategy: "usernamePassword"
     };
   };
 }

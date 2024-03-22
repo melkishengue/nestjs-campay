@@ -10,7 +10,7 @@ import { CampayHttpClientService } from "../campay-http-client.service";
 const moduleFixture = Test.createTestingModule({
   imports: [
     CampayModule.forRoot({
-      apiKey: "api-key-xxx-yyy"
+      permanentAccessToken: "api-key-xxx-yyy"
     })
   ],
   providers: []

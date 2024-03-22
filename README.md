@@ -2,6 +2,8 @@
 
 <p align="center">✨✨✨ NestJS Campay integration with full support of <b>ALL CAMPAY OPERATIONS</b> ✨✨✨</p>
 
+<p align="center"><a href="https://documenter.getpostman.com/view/2391374/T1LV8PVA" target="_blank">Campay HTTP API documentation</a></p>
+
 ---
 
 ## Install
@@ -19,7 +21,7 @@ import { CampayModule } from 'nestjs-campay';
 
 @Module({
   imports: [CampayModule.forRoot({
-    apiKey: 'my-secret-api-key',
+    permanentAccessToken: 'my-secret-api-key',
     isProduction: true
   })],
 })
@@ -54,9 +56,9 @@ The following interface is using for the configuration:
 interface Params {
   /**
    * Optional parameter
-   * The campay apiKey.
+   * The campay permanentAccessToken.
    */
-  apiKey?: string;
+  permanentAccessToken?: string;
 
   /**
    * Optional parameter for setting the application username. Should be set along with the password.
@@ -80,7 +82,7 @@ interface Params {
 }
 ```
 
-When the `apiKey` is specified, authentication with the Campay API will utilize it. Otherwise, both the `username` and `password` options must be provided. Failure to provide either will result in an error being thrown during startup.
+When the `permanentAccessToken` is specified, authentication with the Campay API will utilize it. Otherwise, both the `username` and `password` options must be provided. Failure to provide either will result in an error being thrown during startup.
 
 ### Synchronous configuration
 
@@ -114,7 +116,7 @@ import { CampayModule } from 'nestjs-campay';
 
 @Injectable()
 class ConfigService {
-  public readonly apiKey = 'campay-api-key-xxx-xxx';
+  public readonly permanentAccessToken = 'campay-api-key-xxx-xxx';
   public readonly isProduction = true;
 }
 
@@ -132,7 +134,7 @@ class ConfigModule {}
       useFactory: async (config: ConfigService) => {
         await somePromise();
         return {
-          apiKey: config.apiKey,
+          permanentAccessToken: config.permanentAccessToken,
           isProduction: config.isProduction,
         };
       }
@@ -143,20 +145,18 @@ class ConfigModule {}
 class MyModule {}
 ```
 
-See [pino.destination](https://github.com/pinojs/pino/blob/master/docs/api.md#pino-destination)
+## Mocking axios instance for testing
 
-## Testing a class that uses @InjectPinoLogger
-
-This package exposes a `getLoggerToken()` function that returns a prepared injection token based on the provided context.
-Using this token, you can provide a mock implementation of the logger using any of the standard custom provider techniques, including `useClass`, `useValue` and `useFactory`.
+This package exposes a `AXIOS_INSTANCE_TOKEN` token that can inject a custom axios implementation of type `AxiosInstance` (from `axios` package).
+Using this token, you can provide a mock implementation of the axios instance using any of the standard custom provider techniques, including `useClass`, `useValue` and `useFactory`.
 
 ```ts
   const module: TestingModule = await Test.createTestingModule({
     providers: [
-      MyService,
+      ...,
       {
-        provide: getLoggerToken(MyService.name),
-        useValue: mockLogger,
+        provide: AXIOS_INSTANCE_TOKEN,
+        useValue: axiosMock,
       },
     ],
   }).compile();

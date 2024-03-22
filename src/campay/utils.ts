@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export const getAxiosErrorMessage = (error: unknown): string => {
-  console.log("🙋‍♀️", error);
+export const getAxiosErrorMessage = (error: unknown): any => {
   if ((error as any).response) {
-    const message = (error as any)?.response?.data?.message;
+    const message = (error as any)?.response?.data;
 
     return message;
   } else if ((error as any).request) {

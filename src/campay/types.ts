@@ -7,19 +7,21 @@ export type ModuleAsyncOptions<T> = Pick<
   Pick<FactoryProvider<T>, "useFactory" | "inject">;
 
 export interface CampayModuleConfigOptions {
-  apiKey?: string;
+  permanentAccessToken?: string;
   username?: string;
   password?: string;
   isProduction?: boolean;
+  nbRefreshTokenRetries?: number;
 }
 
-export type AuthStrategy = "apiKey" | "access_token";
+export type AuthStrategy = "permanentAccessToken" | "usernamePassword";
 
 export interface CampayInternalModuleConfigOptions
   extends CampayModuleConfigOptions {
   isProduction: boolean;
   baseUrl: string;
   authStrategy: AuthStrategy;
+  nbRefreshTokenRetries: number;
 }
 
 export type CampayModuleAsyncOptions =
