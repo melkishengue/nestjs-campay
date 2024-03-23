@@ -5,6 +5,7 @@ module.exports = {
   plugins: ["@typescript-eslint", "simple-import-sort"],
   rules: {
     "simple-import-sort/exports": "warn",
+    // "@typescript-eslint/no-floating-promises": "error",
     "simple-import-sort/imports": [
       "warn",
       {

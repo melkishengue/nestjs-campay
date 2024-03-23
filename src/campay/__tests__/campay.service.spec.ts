@@ -7,16 +7,16 @@ import { CampayService } from "../campay.service";
 import { CampayCurrency } from "../campay.types";
 import { CampayHttpClientService } from "../campay-http-client.service";
 
-const moduleFixture = Test.createTestingModule({
-  imports: [
-    CampayModule.forRoot({
-      permanentAccessToken: "api-key-xxx-yyy"
-    })
-  ],
-  providers: []
-});
+describe("Campay service: auth with permanent token", () => {
+  const moduleFixture = Test.createTestingModule({
+    imports: [
+      CampayModule.forRoot({
+        permanentAccessToken: "api-key-xxx-yyy"
+      })
+    ],
+    providers: []
+  });
 
-describe("Campay service", () => {
   let campayService: CampayService;
   let campayHttpClientService: CampayHttpClientService;
 
@@ -154,5 +154,60 @@ describe("Campay service", () => {
 
   afterEach(() => {
     mockAxios.reset();
+  });
+});
+
+describe("Campay service: auth with username and password", () => {
+  const moduleFixture = Test.createTestingModule({
+    imports: [
+      CampayModule.forRoot({
+        username: "my.store",
+        password: "secret-password",
+        nbRefreshTokenRetries: 5
+      })
+    ],
+    providers: []
+  });
+
+  let campayService: CampayService;
+  let campayHttpClientService: CampayHttpClientService;
+
+  beforeEach(async () => {
+    const module = await moduleFixture.compile();
+    campayService = module.get(CampayService);
+    campayHttpClientService = module.get(CampayHttpClientService);
+
+    axios.post = jest.fn().mockResolvedValue({ ok: true });
+    axios.get = jest.fn().mockResolvedValue({ ok: true });
+  });
+
+  it("should correctly query history", async () => {
+    // expect: /api/token/ should be called 5 times
+    // expect: /api/token/ should be called 1 time and 1 call to the real url
+    axios.get = jest.fn().mockImplementationOnce((url) => {
+      switch (url) {
+        case "/users.json":
+          return Promise.resolve({ data: [{ id: 1, title: "john doe" }] });
+        case "/items.json":
+          return Promise.resolve({ data: [{ id: 1, item: "whatever" }] });
+        default:
+          return Promise.reject(new Error("not found"));
+      }
+    });
+
+    await campayService.getHistory({
+      start_date: "2024-03-02",
+      end_date: "2024-03-05"
+    });
+    expect(
+      campayHttpClientService.getAxiosInstance().post
+    ).toHaveBeenCalledWith(
+      "https://demo.campay.net/api/history/",
+      {
+        start_date: "2024-03-02",
+        end_date: "2024-03-05"
+      },
+      { headers: undefined }
+    );
   });
 });

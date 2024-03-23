@@ -27,9 +27,12 @@ export class TokenService {
         const status = error.response ? error.response.status : null;
         const nbPreviousRetries =
           Number(error.config.headers["X-jwt-retries"] || 0) || 0;
+        const isWrongCredentialsError =
+          status === 400 &&
+          error.response?.data?.non_field_errors?.[0]?.includes("credentials");
 
         if (
-          status === 400 &&
+          !isWrongCredentialsError &&
           nbPreviousRetries < this.config.nbRefreshTokenRetries
         ) {
           this.logger.debug(
@@ -43,6 +46,10 @@ export class TokenService {
           } catch (err) {
             return await Promise.reject(err);
           }
+        } else {
+          this.logger.debug(
+            "Provided credentials are wrong. Refreshing the access token will not be retried. Aborting"
+          );
         }
 
         return Promise.reject(error);
@@ -50,13 +57,17 @@ export class TokenService {
     );
   }
 
-  getAccessToken() {
+  async getAccessToken() {
+    if (!this.accessToken) {
+      return this.refreshToken();
+    }
+
     return this.accessToken;
   }
 
-  async refreshToken() {
+  async refreshToken(): Promise<string> {
     try {
-      this.logger.debug(`Fetching new access token...`);
+      this.logger.debug(`Fetching new access token`);
       const response = await this.$AxiosInstance.post<
         unknown,
         AxiosResponse<{ token: string; expires_in: number }>
@@ -65,7 +76,9 @@ export class TokenService {
         password: this.config.password
       });
 
-      this.accessToken = response.data.token;
+      const token = response.data.token;
+      this.accessToken = token;
+      return token;
     } catch (error) {
       const campayResponse = getAxiosErrorMessage(error);
       this.logger.error(

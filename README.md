@@ -46,11 +46,11 @@ export class MyService {
 }
 ```
 
-This module functions as a wrapper for the campay HTTP API. Therefore, it inherits all constraints imposed by the campay HTTP API. For instance, in development mode (specified by the `isProduction` property during module registration), limitations such as a maximum transfer amount of 100XAF apply.
+This module functions as a wrapper for the campay HTTP API. It inherits all constraints imposed by the campay HTTP API. For instance, in development mode (specified by the `isProduction` property during module registration), limitations such as a maximum transfer amount of 100XAF apply.
 
 ## Configuration params
 
-The following interface is using for the configuration:
+The following interface is used for the configuration:
 
 ```ts
 interface Params {
@@ -79,6 +79,18 @@ interface Params {
    * 
    */
   isProduction?: boolean;
+
+  /**
+   * Optional parameter to set the number of retries for refreshing the access token.
+   * Only needed if username and password are also provided.
+   * 
+   * The refreshing could fail for various reasons as connection issues, temporary service outage, etc...
+   * **Note: **The refreshing will not be retried in case of wrong credentials.
+   * 
+   * Default: 2
+   * 
+   */
+  nbRefreshTokenRetries?: number;
 }
 ```
 
@@ -136,6 +148,7 @@ class ConfigModule {}
         return {
           permanentAccessToken: config.permanentAccessToken,
           isProduction: config.isProduction,
+          nbRefreshTokenRetries: 4
         };
       }
     })
