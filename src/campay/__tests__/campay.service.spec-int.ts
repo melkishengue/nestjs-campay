@@ -5,6 +5,7 @@ import nock from "nock";
 import { CampayModule } from "../campay.module";
 import { CampayService } from "../campay.service";
 import {
+  CampayAccessTokenResponse,
   CampayAirtimeTransferRequest,
   CampayCollectRequest,
   CampayCurrency,
@@ -16,6 +17,12 @@ axios.defaults.adapter = "http";
 
 const CAMPAY_BASE_URL = "https://demo.campay.net";
 const ACCESS_TOKEN = "api-key-xxx-yyy";
+const USERNAME = "my-store";
+const PASSWORD = "secret";
+const SAMPLE_REFRESH_TOKEN_RESPONSE: CampayAccessTokenResponse = {
+  token: ACCESS_TOKEN,
+  expires_in: 3600
+};
 const SAMPLE_API_RESPONSE = { response: "From Campay" };
 axios.defaults.baseURL = CAMPAY_BASE_URL;
 
@@ -163,5 +170,141 @@ describe("Campay service: auth with permanent token", () => {
 
   afterAll(() => {
     nock.cleanAll();
+  });
+});
+
+describe("Campay service: auth with username and password", () => {
+  const moduleFixture = Test.createTestingModule({
+    imports: [
+      CampayModule.forRoot({
+        username: USERNAME,
+        password: PASSWORD
+      })
+    ],
+    providers: []
+  });
+
+  let campayService: CampayService;
+
+  beforeEach(async () => {
+    const module = await moduleFixture.compile();
+    campayService = module.get(CampayService);
+  });
+
+  it("should fetch token and perform action", async () => {
+    const params = {
+      start_date: "2024-03-02",
+      end_date: "2024-03-05"
+    };
+    const scopeTokenRefresh = nock(CAMPAY_BASE_URL)
+      .post("/api/token/", {
+        username: USERNAME,
+        password: PASSWORD
+      })
+      .reply(200, SAMPLE_REFRESH_TOKEN_RESPONSE);
+
+    const scopeGetHistory = nock(CAMPAY_BASE_URL, {
+      reqheaders: {
+        authorization: `Token ${ACCESS_TOKEN}`
+      }
+    })
+      .post("/api/history/", {
+        ...params
+      })
+      .reply(200, SAMPLE_API_RESPONSE);
+
+    const res = await campayService.getHistory(params);
+
+    expect(res).toMatchObject(SAMPLE_API_RESPONSE);
+    scopeTokenRefresh.done();
+    scopeGetHistory.done();
+  });
+
+  it("should retry fetching the token if some error occurs", async () => {
+    const params = {
+      start_date: "2024-03-02",
+      end_date: "2024-03-05"
+    };
+    const scopeTokenRefresh = nock(CAMPAY_BASE_URL)
+      .post("/api/token/", {
+        username: USERNAME,
+        password: PASSWORD
+      })
+      .reply(503, { message: "Service unavailable" })
+      .post("/api/token/", {
+        username: USERNAME,
+        password: PASSWORD
+      })
+      .reply(503, { message: "Service unavailable" })
+      .post("/api/token/", {
+        username: USERNAME,
+        password: PASSWORD
+      })
+      .reply(200, SAMPLE_REFRESH_TOKEN_RESPONSE);
+
+    const scopeGetHistory = nock(CAMPAY_BASE_URL, {
+      reqheaders: {
+        authorization: `Token ${ACCESS_TOKEN}`
+      }
+    })
+      .post("/api/history/", {
+        ...params
+      })
+      .reply(200, SAMPLE_API_RESPONSE);
+
+    const res = await campayService.getHistory(params);
+
+    expect(res).toMatchObject(SAMPLE_API_RESPONSE);
+    scopeTokenRefresh.done();
+    scopeGetHistory.done();
+  });
+
+  it("should throw error if number of retries exceeded", async () => {
+    const params = {
+      start_date: "2024-03-02",
+      end_date: "2024-03-05"
+    };
+    const scope = nock(CAMPAY_BASE_URL)
+      .post("/api/token/", {
+        username: USERNAME,
+        password: PASSWORD
+      })
+      .reply(503, { message: "Service unavailable" })
+      .post("/api/token/", {
+        username: USERNAME,
+        password: PASSWORD
+      })
+      .reply(503, { message: "Service unavailable" });
+
+    expect.assertions(1);
+    try {
+      await campayService.getHistory(params);
+    } catch (error) {
+      expect(true).toBe(true);
+    } finally {
+      scope.done();
+    }
+  });
+
+  it("should not retry fetching access token if credentials are incorrect", async () => {
+    const params = {
+      start_date: "2024-03-02",
+      end_date: "2024-03-05"
+    };
+    const scope = nock(CAMPAY_BASE_URL)
+      .post("/api/token/", {
+        username: USERNAME,
+        password: PASSWORD
+      })
+      .reply(400, { message: "credentials" });
+
+    expect.assertions(1);
+    try {
+      await campayService.getHistory(params);
+    } catch (error) {
+      expect(true).toBe(true);
+    } finally {
+      scope.done();
+    }
   });
 });

@@ -65,6 +65,11 @@ export interface CampayWithdrawResponse {
   reference: string;
 }
 
+export interface CampayAccessTokenResponse {
+  token: string;
+  expires_in: number;
+}
+
 export interface CampayQueryStatusRequest {
   reference: string;
 }

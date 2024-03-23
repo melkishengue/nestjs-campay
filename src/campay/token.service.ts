@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 
+import { CampayAccessTokenResponse } from "./campay.types";
 import {
   CampayInternalModuleConfigOptions,
   INTERNAL_CAMPAY_CONFIG_OPTIONS
@@ -70,7 +71,7 @@ export class TokenService {
       this.logger.debug(`Fetching new access token`);
       const response = await this.$AxiosInstance.post<
         unknown,
-        AxiosResponse<{ token: string; expires_in: number }>
+        AxiosResponse<CampayAccessTokenResponse>
       >(`${this.config.baseUrl}/token/`, {
         username: this.config.username,
         password: this.config.password

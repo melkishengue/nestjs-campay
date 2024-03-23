@@ -143,7 +143,7 @@ export class CampayService {
       body: params
     });
 
-    this.logger.debug(`Response: ${JSON.stringify(res.data)}`);
+    // this.logger.debug(`Response: ${JSON.stringify(res.data)}`);
 
     return res.data;
   }

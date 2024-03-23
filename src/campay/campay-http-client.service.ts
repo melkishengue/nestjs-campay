@@ -88,8 +88,8 @@ export class CampayHttpClientService {
 
       return res;
     } catch (error) {
-      const axiosMessage = getAxiosErrorMessage(error);
-      this.logger.debug(axiosMessage);
+      // const axiosMessage = getAxiosErrorMessage(error);
+      this.logger.debug("axiosMessage");
       throw error;
     }
   }
