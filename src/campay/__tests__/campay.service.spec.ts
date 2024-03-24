@@ -286,7 +286,7 @@ describe("Campay service: auth with username and password", () => {
     }
   });
 
-  it("should not retry fetching access token if credentials are incorrect", async () => {
+  it("should not retry fetching access token and throw error if credentials are incorrect", async () => {
     const params = {
       start_date: "2024-03-02",
       end_date: "2024-03-05"
@@ -296,7 +296,7 @@ describe("Campay service: auth with username and password", () => {
         username: USERNAME,
         password: PASSWORD
       })
-      .reply(400, { message: "credentials" });
+      .reply(400, { non_field_errors: ["credentials"] });
 
     expect.assertions(1);
     try {
