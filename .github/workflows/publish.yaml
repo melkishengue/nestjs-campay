@@ -2,7 +2,7 @@ name: Build & Publish
 
 on:
   push:
-    branches: [ "main", "feat/initial-version" ]
+    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 env:
