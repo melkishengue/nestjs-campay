@@ -42,6 +42,7 @@ export class CampayModule {
               return {
                 permanentAccessToken: config.API_KEY,
                 isProduction: config.IS_PRODUCTION,
+                nbRefreshTokenRetries: 5,
               };
             },
             inject: [Config],

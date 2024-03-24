@@ -41,7 +41,6 @@ export class TokenService {
           );
 
           error.config.headers["X-jwt-retries"] = nbPreviousRetries + 1;
-          // error.config.baseURL = undefined;
           try {
             return await this.$AxiosInstance.request(error.config);
           } catch (err) {
