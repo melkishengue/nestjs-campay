@@ -1,7 +1,7 @@
 {
   "name": "nestjs-campay",
   "version": "1.0.0",
-  "description": "Campay integration NestJS module",
+  "description": "NestJS module for Campay. Campay is a Mobile Money solutions provider in Cameroon",
   "main": "dist/index",
   "types": "dist/index",
   "scripts": {
@@ -15,11 +15,7 @@
     "test:cov": "jest --coverage",
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
-  "keywords": [
-    "campay",
-    "cameroon payment",
-    "mobile money"
-  ],
+  "keywords": ["campay", "cameroon payment", "mobile money"],
   "publishConfig": {
     "access": "public"
   },
