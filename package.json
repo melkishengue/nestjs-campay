@@ -27,7 +27,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/melkishengue/nestjs-campay"
+    "url": "git+https://github.com/melkishengue/nestjs-campay.git"
   },
   "bugs": "https://github.com/melkishengue/nestjs-campay",
   "author": "Melkis Hengue",
